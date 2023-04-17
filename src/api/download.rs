@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, time::Duration};
 
 use anyhow::Result;
 use async_trait::async_trait;
@@ -23,6 +23,7 @@ pub(crate) async fn download_with_progress_bar(
     // FIXME: Don't unwrap
     let total_size = response.content_length().unwrap();
     let progress_bar = make_progress_bar(&path, total_size)?;
+    progress_bar.enable_steady_tick(Duration::from_millis(50));
 
     let mut stream = response.bytes_stream();
     let mut file = File::create(path).await?;
