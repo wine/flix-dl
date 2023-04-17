@@ -41,8 +41,8 @@ fn make_progress_bar(path: &PathBuf, total_size: u64) -> Result<ProgressBar> {
     let progress_bar = ProgressBar::new(total_size);
     progress_bar.set_style(
         ProgressStyle::default_bar()
-            .template("{msg} {bar:40.green/black} {bytes:>11.green}/{total_bytes:<11.green} {bytes_per_sec:>13.red} eta {eta:.blue}")?
-            .progress_chars("█▇▆▅▄▃▂▁  "),
+            .template("{msg} [{wide_bar:.green/white}] {bytes}/{total_bytes} {elapsed}/{eta}")?
+            .progress_chars("#>-"),
     );
 
     // FIXME: Don't unwrap
