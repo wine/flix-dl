@@ -41,7 +41,7 @@ fn make_progress_bar(path: &PathBuf, total_size: u64) -> Result<ProgressBar> {
     let progress_bar = ProgressBar::new(total_size);
     progress_bar.set_style(
         ProgressStyle::default_bar()
-            .template("{msg} [{wide_bar:.green/white}] {bytes}/{total_bytes} {elapsed}/{eta}")?
+            .template("{msg} [{elapsed}] [{wide_bar:.green/white}] {bytes}/{total_bytes} {eta}")?
             .progress_chars("#>-"),
     );
 
