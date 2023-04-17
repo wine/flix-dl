@@ -30,7 +30,7 @@ enum Command {
 async fn main() -> Result<()> {
     let cli = Cli::parse();
     let client = Client::new("https://flixtor.to", &cli.vip_token)?;
-    
+
     let download: Box<dyn Download> = match cli.command {
         Command::Movie => Box::new(client.get_movie(cli.id).await?),
         Command::Show => Box::new(client.get_show(cli.id).await?),

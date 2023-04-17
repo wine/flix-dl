@@ -4,7 +4,10 @@ use anyhow::Result;
 use async_trait::async_trait;
 use futures_util::StreamExt;
 use indicatif::{ProgressBar, ProgressStyle};
-use tokio::{fs::File, io::AsyncWriteExt};
+use tokio::{
+    fs::{self, File},
+    io::AsyncWriteExt,
+};
 
 use super::Client;
 
@@ -22,6 +25,10 @@ pub(crate) async fn download_with_progress_bar(
 
     // FIXME: Don't unwrap
     let total_size = response.content_length().unwrap();
+    if total_size == get_initial_position(&path).await {
+        return Ok(());
+    }
+
     let progress_bar = make_progress_bar(&path, total_size)?;
     progress_bar.enable_steady_tick(Duration::from_millis(50));
 
@@ -37,6 +44,13 @@ pub(crate) async fn download_with_progress_bar(
     Ok(())
 }
 
+async fn get_initial_position(path: &PathBuf) -> u64 {
+    match fs::metadata(path).await {
+        Ok(metadata) => metadata.len(),
+        Err(_) => 0,
+    }
+}
+
 fn make_progress_bar(path: &PathBuf, total_size: u64) -> Result<ProgressBar> {
     let progress_bar = ProgressBar::new(total_size);
     progress_bar.set_style(
@@ -47,6 +61,6 @@ fn make_progress_bar(path: &PathBuf, total_size: u64) -> Result<ProgressBar> {
 
     // FIXME: Don't unwrap
     progress_bar.set_message(path.file_name().unwrap().to_str().unwrap().to_owned());
-    
+
     Ok(progress_bar)
 }
