@@ -6,6 +6,9 @@ edition = "2021"
 [dependencies.anyhow]
 version = "1.0.70"
 
+[dependencies.thiserror]
+version = "1.0.40"
+
 [dependencies.tokio]
 version = "1.27.0"
 features = ["macros", "rt-multi-thread", "fs"]
