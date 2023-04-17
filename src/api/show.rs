@@ -8,7 +8,7 @@ use select::{
 };
 use tokio::fs;
 
-use super::{download_with_progress_bar, Client, Download};
+use super::{download_with_progress_bar, Client, Download, Error};
 
 #[derive(Debug)]
 pub struct Show {
@@ -34,8 +34,11 @@ impl TryFrom<Document> for Show {
     type Error = anyhow::Error;
 
     fn try_from(doc: Document) -> Result<Self, Self::Error> {
-        // FIXME: Don't unwrap
-        let show_name = doc.find(Class("watch-header")).next().unwrap().text();
+        let show_name = doc
+            .find(Class("watch-header"))
+            .next()
+            .ok_or(Error::MissingClass("watch-header"))?
+            .text();
 
         let mut show = Show {
             name: String::from(show_name),
@@ -43,11 +46,10 @@ impl TryFrom<Document> for Show {
         };
 
         for season_node in doc.find(Class("section-watch-season")) {
-            // FIXME: Don't unwrap
             let season_number = season_node
                 .find(Attr("itemprop", "seasonNumber"))
                 .next()
-                .unwrap()
+                .ok_or(Error::MissingAttr("itemprop::seasonNumber"))?
                 .text()
                 .parse::<u32>()?;
 
@@ -57,28 +59,25 @@ impl TryFrom<Document> for Show {
             };
 
             for episode in season_node.find(Class("eplist")) {
-                // FIXME: Don't unwrap
                 let episode_number = episode
                     .find(Attr("itemprop", "episodeNumber"))
                     .next()
-                    .unwrap()
+                    .ok_or(Error::MissingAttr("itemprop::episodeNumber"))?
                     .text()
                     .parse::<u32>()?;
 
-                // FIXME: Don't unwrap
                 let episode_name = episode
                     .find(Attr("itemprop", "name"))
                     .next()
-                    .unwrap()
+                    .ok_or(Error::MissingAttr("itemprop::name"))?
                     .text();
 
-                // FIXME: Don't unwrap
                 let episode_link = episode
                     .find(Class("downloadvid"))
                     .next()
-                    .unwrap()
+                    .ok_or(Error::MissingClass("downloadvid"))?
                     .attr("data-href")
-                    .unwrap();
+                    .ok_or(Error::MissingAttr("data-href"))?;
 
                 season.episodes.push(Episode {
                     season: season_number,

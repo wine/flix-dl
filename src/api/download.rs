@@ -9,7 +9,7 @@ use tokio::{
     io::AsyncWriteExt,
 };
 
-use super::Client;
+use super::{Client, Error};
 
 #[async_trait]
 pub trait Download {
@@ -23,8 +23,7 @@ pub(crate) async fn download_with_progress_bar(
 ) -> Result<()> {
     let response = client.get(link)?.send().await?;
 
-    // FIXME: Don't unwrap
-    let total_size = response.content_length().unwrap();
+    let total_size = response.content_length().ok_or(Error::InvalidDownload)?;
     if total_size == get_initial_position(&path).await {
         return Ok(());
     }
@@ -60,7 +59,8 @@ fn make_progress_bar(path: &PathBuf, total_size: u64) -> Result<ProgressBar> {
     );
 
     // FIXME: Don't unwrap
-    progress_bar.set_message(path.file_name().unwrap().to_str().unwrap().to_owned());
+    let file_name = path.file_name().unwrap().to_str().unwrap().to_owned();
+    progress_bar.set_message(file_name);
 
     Ok(progress_bar)
 }

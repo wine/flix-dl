@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use select::{document::Document, predicate::Class};
 use tokio::fs;
 
-use super::{download_with_progress_bar, Client, Download};
+use super::{download_with_progress_bar, Client, Download, Error};
 
 #[derive(Debug)]
 pub struct Movie {
@@ -17,16 +17,18 @@ impl TryFrom<Document> for Movie {
     type Error = anyhow::Error;
 
     fn try_from(doc: Document) -> Result<Self> {
-        // FIXME: Don't unwrap
-        let name = doc.find(Class("watch-header")).next().unwrap().text();
+        let name = doc
+            .find(Class("watch-header"))
+            .next()
+            .ok_or(Error::MissingClass("watch-header"))?
+            .text();
 
-        // FIXME: Don't unwrap
         let id = doc
             .find(Class("favorite"))
             .next()
-            .unwrap()
+            .ok_or(Error::MissingClass("favorite"))?
             .attr("data-pid")
-            .unwrap();
+            .ok_or(Error::MissingAttr("data-pid"))?;
 
         let link = format!("/download?id={id}");
 
