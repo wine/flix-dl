@@ -1,4 +1,4 @@
-use std::{cmp::min, path::PathBuf};
+use std::path::PathBuf;
 
 use anyhow::Result;
 use async_trait::async_trait;
@@ -27,12 +27,10 @@ pub(crate) async fn download_with_progress_bar(
     let mut stream = response.bytes_stream();
     let mut file = File::create(path).await?;
 
-    let mut progress = 0u64;
     while let Some(bytes) = stream.next().await {
         let bytes = bytes?;
         file.write_all(&bytes).await?;
-        progress = min(progress + bytes.len() as u64, total_size);
-        progress_bar.set_position(progress);
+        progress_bar.inc(bytes.len() as u64);
     }
 
     Ok(())
@@ -48,6 +46,6 @@ fn make_progress_bar(path: &PathBuf, total_size: u64) -> Result<ProgressBar> {
 
     // FIXME: Don't unwrap
     progress_bar.set_message(path.file_name().unwrap().to_str().unwrap().to_owned());
-
+    
     Ok(progress_bar)
 }
