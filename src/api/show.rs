@@ -4,6 +4,7 @@ use anyhow::Result;
 use async_trait::async_trait;
 use select::{
     document::Document,
+    node::Data,
     predicate::{Attr, Class},
 };
 use tokio::fs;
@@ -38,7 +39,15 @@ impl TryFrom<Document> for Show {
             .find(Class("watch-header"))
             .next()
             .ok_or(Error::MissingClass("watch-header"))?
-            .text();
+            .children()
+            .filter(|node| match node.data() {
+                Data::Text(_) => true,
+                _ => false,
+            })
+            .map(|node| node.text())
+            .collect::<String>();
+
+        let show_name = show_name.trim();
 
         let mut show = Show {
             name: String::from(show_name),
