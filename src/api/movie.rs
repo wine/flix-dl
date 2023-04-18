@@ -45,7 +45,6 @@ impl Download for Movie {
         let path = base_path.join(&self.name);
         fs::create_dir_all(&path).await?;
 
-        let path = path.join(&format!("{}.mp4", self.name));
         download_with_progress_bar(&client, &self.link, &path).await
     }
 }

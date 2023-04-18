@@ -114,6 +114,7 @@ impl Download for Season {
     async fn download(&self, client: &Client, base_path: &PathBuf) -> Result<()> {
         let path = base_path.join(format!("Season {}", self.number));
         fs::create_dir_all(&path).await?;
+
         for episode in &self.episodes {
             episode.download(&client, &path).await?;
         }
@@ -125,10 +126,6 @@ impl Download for Season {
 #[async_trait]
 impl Download for Episode {
     async fn download(&self, client: &Client, base_path: &PathBuf) -> Result<()> {
-        let path = base_path.join(format!(
-            "S{:02}.E{:02}_{}.mp4",
-            self.season, self.number, self.name
-        ));
-        download_with_progress_bar(&client, &self.link, &path).await
+        download_with_progress_bar(&client, &self.link, &base_path).await
     }
 }

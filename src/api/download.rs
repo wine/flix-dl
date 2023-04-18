@@ -23,6 +23,14 @@ pub(crate) async fn download_with_progress_bar(
 ) -> Result<()> {
     let response = client.get(link)?.send().await?;
 
+    let (_, file_name) = response
+        .url()
+        .query_pairs()
+        .find(|(k, _)| k == "fn")
+        .ok_or(Error::InvalidDownload)?;
+
+    let path = path.join(file_name.into_owned());
+
     let total_size = response.content_length().ok_or(Error::InvalidDownload)?;
     if total_size == get_initial_position(&path).await {
         return Ok(());
