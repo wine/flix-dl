@@ -23,20 +23,22 @@ pub(crate) async fn download_with_progress_bar(
 ) -> Result<()> {
     let response = client.get(link)?.send().await?;
 
-    let (_, file_name) = response
+    let file_name = response
         .url()
         .query_pairs()
         .find(|(k, _)| k == "fn")
-        .ok_or(Error::InvalidDownload)?;
+        .ok_or(Error::InvalidDownload)?
+        .1
+        .to_string();
 
-    let path = path.join(file_name.into_owned());
+    let path = path.join(&file_name);
 
     let total_size = response.content_length().ok_or(Error::InvalidDownload)?;
     if total_size == get_initial_position(&path).await {
         return Ok(());
     }
 
-    let progress_bar = make_progress_bar(&path, total_size)?;
+    let progress_bar = make_progress_bar(file_name, total_size)?;
     progress_bar.enable_steady_tick(Duration::from_millis(50));
 
     let mut stream = response.bytes_stream();
@@ -58,7 +60,7 @@ async fn get_initial_position(path: &PathBuf) -> u64 {
     }
 }
 
-fn make_progress_bar(path: &PathBuf, total_size: u64) -> Result<ProgressBar> {
+fn make_progress_bar(file_name: String, total_size: u64) -> Result<ProgressBar> {
     let progress_bar = ProgressBar::new(total_size);
     progress_bar.set_style(
         ProgressStyle::default_bar()
@@ -66,8 +68,6 @@ fn make_progress_bar(path: &PathBuf, total_size: u64) -> Result<ProgressBar> {
             .progress_chars("#>-"),
     );
 
-    // FIXME: Don't unwrap
-    let file_name = path.file_name().unwrap().to_str().unwrap().to_owned();
     progress_bar.set_message(file_name);
 
     Ok(progress_bar)
