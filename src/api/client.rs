@@ -6,6 +6,8 @@ use select::document::Document;
 
 use super::{Movie, Show};
 
+const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; rv:112.0) Gecko/20100101 Firefox/112.0";
+
 #[derive(Clone)]
 pub struct Client {
     base_url: Url,
@@ -20,6 +22,7 @@ impl Client {
         jar.add_cookie_str(&format!("vipLogin={vip_token}"), &base_url);
 
         let client = reqwest::Client::builder()
+            .user_agent(USER_AGENT)
             .cookie_provider(Arc::new(jar))
             .build()?;
 
