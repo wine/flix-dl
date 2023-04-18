@@ -25,9 +25,9 @@ pub struct Season {
 
 #[derive(Clone, Debug)]
 pub struct Episode {
-    season: u32,
-    number: u32,
-    name: String,
+    _season: u32,
+    _number: u32,
+    _name: String,
     link: String,
 }
 
@@ -89,9 +89,9 @@ impl TryFrom<Document> for Show {
                     .ok_or(Error::MissingAttr("data-href"))?;
 
                 season.episodes.push(Episode {
-                    season: season_number,
-                    number: episode_number,
-                    name: episode_name,
+                    _season: season_number,
+                    _number: episode_number,
+                    _name: episode_name,
                     link: String::from(episode_link),
                 });
             }
