@@ -41,6 +41,10 @@ impl TryFrom<Document> for Movie {
 
 #[async_trait]
 impl Download for Movie {
+    async fn prefetch(&self, _client: &Client) -> Result<()> {
+        Ok(())
+    }
+
     async fn download(&self, client: &Client, base_path: &PathBuf) -> Result<()> {
         let path = base_path.join(&self.name);
         fs::create_dir_all(&path).await?;

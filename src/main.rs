@@ -36,5 +36,6 @@ async fn main() -> Result<()> {
         Command::Show => Box::new(client.get_show(cli.id).await?),
     };
 
+    download.prefetch(&client).await?;
     download.download(&client, &cli.path).await
 }
