@@ -154,7 +154,6 @@ impl Download for Episode {
         println!("Prefetching S{:02}E{:02}", self.season, self.number);
 
         let response = client.get(&self.link)?.send().await?;
-
         if let None = response.content_length() {
             // approx. 20 conversion requests per 300 seconds
             // 20 / 300  = 0.067

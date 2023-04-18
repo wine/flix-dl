@@ -16,6 +16,9 @@ struct Cli {
     #[arg(long)]
     path: PathBuf,
 
+    #[arg(long)]
+    prefetch: bool,
+
     #[command(subcommand)]
     command: Command,
 }
@@ -36,6 +39,9 @@ async fn main() -> Result<()> {
         Command::Show => Box::new(client.get_show(cli.id).await?),
     };
 
-    download.prefetch(&client).await?;
+    if cli.prefetch {
+        download.prefetch(&client).await?;
+    }
+
     download.download(&client, &cli.path).await
 }
