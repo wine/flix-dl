@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, time::Duration};
 
 use anyhow::Result;
 use async_trait::async_trait;
@@ -7,7 +7,7 @@ use select::{
     node::Data,
     predicate::{Attr, Class},
 };
-use tokio::fs;
+use tokio::{fs, time};
 
 use super::{download_with_progress_bar, Client, Download, Error};
 
@@ -25,8 +25,8 @@ pub struct Season {
 
 #[derive(Clone, Debug)]
 pub struct Episode {
-    _season: u32,
-    _number: u32,
+    season: u32,
+    number: u32,
     _name: String,
     link: String,
 }
@@ -89,8 +89,8 @@ impl TryFrom<Document> for Show {
                     .ok_or(Error::MissingAttr("data-href"))?;
 
                 season.episodes.push(Episode {
-                    _season: season_number,
-                    _number: episode_number,
+                    season: season_number,
+                    number: episode_number,
                     _name: episode_name,
                     link: String::from(episode_link),
                 });
@@ -108,6 +108,14 @@ impl TryFrom<Document> for Show {
 
 #[async_trait]
 impl Download for Show {
+    async fn prefetch(&self, client: &Client) -> Result<()> {
+        for season in &self.seasons {
+            season.prefetch(&client).await?;
+        }
+
+        Ok(())
+    }
+
     async fn download(&self, client: &Client, base_path: &PathBuf) -> Result<()> {
         let path = base_path.join(&self.name);
         for season in &self.seasons {
@@ -120,6 +128,14 @@ impl Download for Show {
 
 #[async_trait]
 impl Download for Season {
+    async fn prefetch(&self, client: &Client) -> Result<()> {
+        for episode in &self.episodes {
+            episode.prefetch(&client).await?;
+        }
+
+        Ok(())
+    }
+
     async fn download(&self, client: &Client, base_path: &PathBuf) -> Result<()> {
         let path = base_path.join(format!("Season {}", self.number));
         fs::create_dir_all(&path).await?;
@@ -134,6 +150,21 @@ impl Download for Season {
 
 #[async_trait]
 impl Download for Episode {
+    async fn prefetch(&self, client: &Client) -> Result<()> {
+        println!("Prefetching S{:02}E{:02}", self.season, self.number);
+
+        let response = client.get(&self.link)?.send().await?;
+        if let None = response.content_length() {
+            // approx. 20 conversion requests per 300 seconds
+            // 20 / 300  = 0.067
+            // 1 / 0.067 = 14.925 seconds
+            // FIXME: better rate limiting
+            time::sleep(Duration::from_secs(18)).await;
+        }
+
+        Ok(())
+    }
+
     async fn download(&self, client: &Client, base_path: &PathBuf) -> Result<()> {
         download_with_progress_bar(&client, &self.link, &base_path).await
     }

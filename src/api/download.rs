@@ -13,6 +13,7 @@ use super::{Client, Error};
 
 #[async_trait]
 pub trait Download {
+    async fn prefetch(&self, client: &Client) -> Result<()>;
     async fn download(&self, client: &Client, base_path: &PathBuf) -> Result<()>;
 }
 
